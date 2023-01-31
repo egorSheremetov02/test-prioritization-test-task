@@ -1,0 +1,8 @@
+apply plugin: "java"
+apply plugin: "application"
+
+ext.javaMainClass = "org.example.Main"
+
+application {
+    mainClassName = javaMainClass
+}
