@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -59,9 +60,11 @@ public class Main {
             try {
                 var f = completionService.take();
                 // very ugly code, but...
-                if (f.isDone()) {
+                if (!f.isDone()) {
                     try {
-                        System.out.println(f.get());
+                        if (!f.get()) {
+                            System.out.println("couldn't clone repository");
+                        }
                     } catch (ExecutionException e) {
                         throw new RuntimeException(e);
                     }
@@ -73,11 +76,18 @@ public class Main {
             }
         }
 
-        System.out.println("Success!");
+        ProjectBuildEnvironment astminerBuild = new ProjectBuildEnvironment(
+                Main.astminer,
+                Path.of(buildRootDirectory, Main.astminer).toString(),
+                100
+        );
+
+        // '../' because for each version we create a new folder
+        astminerBuild.buildAll("../gradlew");
+
+        astminerBuild.printBuildStatistics();
+
         executor.shutdown();
-
-
-
     }
 
     public static void cloneRepository(String repositoryName, String directory)  throws IOException, InterruptedException {
@@ -97,7 +107,6 @@ public class Main {
 
         try {
             ProcessBuilder pb = new ProcessBuilder("bash", tempScript.toString());
-            pb.inheritIO();
             pb.directory(directoryFile);
             Process process = pb.start();
             process.waitFor();
